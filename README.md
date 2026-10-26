@@ -55,6 +55,17 @@ one with the same store and its admin. To point the theme at yours:
    own page sends the shopper there and back to the site's "order received" address, which the
    theme draws.
 
+5. **Comments and reviews.** They are drawn with the site's spam protection (kitloom/forms'
+   honeypot and Cloudflare Turnstile, Contact → Settings in the admin). With Turnstile on, add
+   the theme's hostname to the widget's hostnames in Cloudflare, or the widget refuses to draw
+   there; Cloudflare's test key (`1x00000000000000000000AA`) works anywhere.
+
+6. **The visitor's address.** Every request reaches the site from the theme's server, which
+   sends the visitor's address along in `X-Forwarded-For`. The site reads it only from a proxy
+   it trusts: set `TRUSTED_PROXIES` in the site's `.env` to the theme server's address. Without
+   it all visitors share one address for the site's limits — five comments a minute, sign-in
+   attempts, the comment flood rule — and the comments record the server as their author's IP.
+
 Nothing else: no CORS, no API keys, no public AI agents address. The theme's server names the
 site as the `Origin` of every POST, so the site's forms pass its forgery check as on its own
 pages; a module that signs users in another way (two-factor, social sign-in) still takes its step
@@ -129,7 +140,28 @@ with the visitor's session, so after signing in every page the theme reads is th
 (`store.signedIn`, their cart, their addresses on the checkout). Password reset links and
 two-factor steps still open on the site.
 
-Comment and review forms and contact forms stay on the site.
+**Comments and reviews in the theme.** A post's comments come with the form the site would draw
+for this visitor (name and email for a guest when asked, "Signed in as …" for a customer, the
+cookies consent, the spam protection); "Post comment" and "Reply" go to the site's
+`comments/v1/comments`, a product's review to `products/{id}/reviews`. The site checks the
+record, the protection, duplicates and the flood rule, and answers with the comment, held for
+moderation or published, which the theme puts into the thread at once.
+
+Contact forms stay on the site.
+
+## Regression
+
+```bash
+npm run regression                                # against http://localhost:3000
+THEME_URL=https://shop-theme.example.com npm run regression
+npm run regression -- --no-writes                 # pages only
+```
+
+`scripts/regression.mjs` does over HTTP what a visitor does: every kind of page drawn on the server
+(with the head and the links), a guest's cart and order, an account signed up, signed out and in,
+an order as the customer and the account after it, a comment, a reply and a review. It writes to
+the site it points at — run it against a sandbox. The site's limits count it as one visitor: five
+comments a minute, so two runs within a minute fail on the throttle.
 
 ## Palette
 

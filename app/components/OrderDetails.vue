@@ -59,5 +59,5 @@ dd.grand { color: var(--rust); font-family: var(--font-display); }
 .addresses { display: grid; gap: 1.5rem; align-content: start; }
 .address p { margin: 0; }
 .note { color: var(--ink-soft); }
-@media (max-width: 800px) { .columns { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .columns { grid-template-columns: minmax(0, 1fr); } }
 </style>

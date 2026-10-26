@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Page, Term } from '#shared/types/kitloom'
+import type { Comment, Page, Term } from '#shared/types/kitloom'
 
 const props = defineProps<{ page: Page }>()
 const { toPath } = useLinks()
@@ -13,7 +13,33 @@ const termsOf = (taxonomy: string): Term[] => {
 }
 const categories = computed(() => termsOf('category'))
 const tags = computed(() => termsOf('post_tag'))
-const comments = computed(() => props.page.comments)
+// The thread as the site drew it, then with what this visitor posted on the page.
+const comments = ref(props.page.comments ? structuredClone(toRaw(props.page.comments)) : null)
+const replyTo = ref<number | null>(null)
+const { notify } = useNotice()
+
+const insert = (list: Comment[], comment: Comment): boolean => {
+  for (const item of list) {
+    if (item.id === comment.parentId) {
+      item.children.push(comment)
+      return true
+    }
+    if (insert(item.children, comment)) return true
+  }
+  return false
+}
+
+const posted = async (comment: Comment, message: string | null) => {
+  if (!comments.value) return
+  if (!comment.parentId || !insert(comments.value.items, comment)) comments.value.items.push(comment)
+  if (comment.status === 'approved') comments.value.count++
+  replyTo.value = null
+  notify(message ?? 'Your comment is published.')
+  await nextTick()
+  document.getElementById(`comment-${comment.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+provide('kitloom:thread', { form: comments.value?.form ?? null, replyTo, posted })
 </script>
 
 <template>
@@ -42,12 +68,17 @@ const comments = computed(() => props.page.comments)
       <li v-for="tag in tags" :key="tag.id"><NuxtLink :to="toPath(tag.link)" class="pill">#{{ tag.name }}</NuxtLink></li>
     </ul>
 
-    <section v-if="comments && (comments.count || comments.open)" class="comments">
-      <h2>{{ comments.count ? `${comments.count} comments` : 'Comments' }}</h2>
+    <section v-if="comments && (comments.count || comments.open || comments.items.length)" id="comments" class="comments">
+      <h2>{{ comments.count ? `${comments.count} ${comments.count === 1 ? 'comment' : 'comments'}` : 'Comments' }}</h2>
+      <nav v-if="comments.pages > 1" class="comment-pages">
+        <NuxtLink v-if="comments.prevUrl" :to="toPath(comments.prevUrl) + '#comments'">← Older comments</NuxtLink>
+        <span v-else />
+        <NuxtLink v-if="comments.nextUrl" :to="toPath(comments.nextUrl) + '#comments'">Newer comments →</NuxtLink>
+      </nav>
       <CommentList v-if="comments.items.length" :comments="comments.items" />
-      <p v-if="comments.open" class="reply">
-        <a :href="content.link + '#respond'" class="button ghost small">Leave a comment on the site</a>
-      </p>
+      <p v-else-if="comments.open" class="muted">No comments yet. Be the first.</p>
+      <CommentForm v-if="comments.open && comments.form && replyTo === null" id="respond" :form="comments.form" @posted="posted" />
+      <p v-else-if="!comments.open" class="muted closed">Comments are closed.</p>
     </section>
   </article>
 </template>
@@ -60,5 +91,8 @@ const comments = computed(() => props.page.comments)
 .cover img { width: 100%; max-height: 520px; object-fit: cover; border-radius: 24px; box-shadow: var(--shadow); }
 .tags { margin-top: 2rem; }
 .comments { max-width: 760px; margin-top: 3.5rem; padding-top: 2rem; border-top: 1px solid var(--line); }
-.reply { margin-top: 1.5rem; }
+.comment-pages { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+.comment-pages a { text-decoration: none; font-weight: 600; }
+.muted { color: var(--muted); }
+.closed { margin-top: 1.5rem; }
 </style>

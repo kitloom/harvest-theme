@@ -3,6 +3,7 @@
 </script>
 
 <template>
+  <NuxtLoadingIndicator color="var(--rust)" :height="3" />
   <NuxtLayout>
     <NuxtPage :page-key="route => route.fullPath" :transition="{ name: 'page', mode: 'out-in' }" />
   </NuxtLayout>

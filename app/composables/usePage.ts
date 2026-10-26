@@ -16,8 +16,8 @@ export function usePage(): { page: Ref<Page> } {
 }
 
 /**
- * Reads the current address again — after a sign-in or a sign-out the same page is another
- * page — and hands the layout and the template the new one.
+ * Reads the current address again — after a sign-in, a sign-out or a saved form the same page
+ * is another page — and hands the layout and the template the new one.
  */
 export function useReloadPage() {
   const route = useRoute()
@@ -25,7 +25,6 @@ export function useReloadPage() {
   const shared = useSharedPage()
 
   return async () => {
-    clearNuxtData(`page:${route.fullPath}`)
     shared.value = await request<Page>('/api/page', { query: { path: route.fullPath }, ignoreResponseError: true })
   }
 }

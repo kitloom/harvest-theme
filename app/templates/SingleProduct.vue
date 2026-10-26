@@ -8,6 +8,17 @@ const product = computed(() => props.page.product!)
 const content = computed(() => props.page.content!)
 const picture = ref(0)
 const quantity = ref(1)
+const reload = useReloadPage()
+const { notify } = useNotice()
+
+// A review held for moderation is not on the page the site draws; its author sees it here.
+const pending = ref<{ rating: number; review: string; author: string }[]>([])
+
+const reviewed = async (status: 'approved' | 'hold', message: string, values: { rating: number; review: string; author: string }) => {
+  notify(message)
+  if (status === 'hold') pending.value.push(values)
+  else await reload()
+}
 
 const ratingRows = computed(() =>
   ['5', '4', '3', '2', '1'].map(stars => ({
@@ -79,30 +90,48 @@ const ratingRows = computed(() =>
 
     <HtmlContent v-if="content.content" :html="content.content" class="prose description" />
 
-    <section v-if="product.reviews.total" class="reviews">
+    <section v-if="product.reviews.total || product.reviewsAllowed" id="reviews" class="reviews">
       <div class="section-head">
-        <h2>{{ product.reviews.total }} reviews</h2>
-        <Stars :rating="product.rating" />
+        <h2>{{ product.reviews.total ? `${product.reviews.total} ${product.reviews.total === 1 ? 'review' : 'reviews'}` : 'Reviews' }}</h2>
+        <Stars v-if="product.reviews.total" :rating="product.rating" />
       </div>
       <div class="reviews-grid">
-        <ul class="bars">
-          <li v-for="row in ratingRows" :key="row.stars">
-            <span>{{ row.stars }} ★</span>
-            <span class="bar"><span :style="{ width: `${row.share}%` }" /></span>
-            <span class="n">{{ row.count }}</span>
-          </li>
-        </ul>
-        <ul class="review-list">
-          <li v-for="review in product.reviews.items" :key="review.id" class="card review">
-            <div class="who">
-              <strong>{{ review.author }}</strong>
-              <span v-if="review.verified" class="badge moss">Verified</span>
-              <Stars :rating="review.rating" />
-              <time>{{ review.dateText }}</time>
-            </div>
-            <p>{{ review.content }}</p>
-          </li>
-        </ul>
+        <div class="side">
+          <ul v-if="product.reviews.total" class="bars">
+            <li v-for="row in ratingRows" :key="row.stars">
+              <span>{{ row.stars }} ★</span>
+              <span class="bar"><span :style="{ width: `${row.share}%` }" /></span>
+              <span class="n">{{ row.count }}</span>
+            </li>
+          </ul>
+          <p v-else class="muted">There are no reviews yet.</p>
+        </div>
+        <div class="list">
+          <ul class="review-list">
+            <li v-for="(review, index) in pending" :key="`pending-${index}`" class="card review held">
+              <div class="who">
+                <strong>{{ review.author || 'You' }}</strong>
+                <span class="badge">Awaiting approval</span>
+                <Stars :rating="review.rating" />
+              </div>
+              <p>{{ review.review }}</p>
+            </li>
+            <li v-for="review in product.reviews.items" :key="review.id" class="card review">
+              <div class="who">
+                <strong>{{ review.author }}</strong>
+                <span v-if="review.verified" class="badge moss">Verified</span>
+                <Stars :rating="review.rating" />
+                <time>{{ review.dateText }}</time>
+              </div>
+              <p>{{ review.content }}</p>
+              <div v-for="reply in review.replies ?? []" :key="reply.id" class="reply">
+                <div class="who"><strong>{{ reply.author }}</strong><time>{{ reply.dateText }}</time></div>
+                <p>{{ reply.content }}</p>
+              </div>
+            </li>
+          </ul>
+          <ReviewForm v-if="product.reviewsAllowed && product.reviewForm" :product="product" @posted="reviewed" />
+        </div>
       </div>
     </section>
 
@@ -134,7 +163,7 @@ const ratingRows = computed(() =>
 .attributes dt { color: var(--muted); }
 .attributes dd { margin: 0; }
 .buy { margin: 1.5rem 0; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-.quantity { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
+.quantity { position: relative; display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
 .quantity button { border: 0; background: none; color: var(--ink); width: 40px; height: 44px; font-size: 1.2rem; cursor: pointer; }
 .quantity input { width: 3rem; border: 0; background: none; text-align: center; font: inherit; color: var(--ink); -moz-appearance: textfield; }
 .quantity input::-webkit-outer-spin-button, .quantity input::-webkit-inner-spin-button { -webkit-appearance: none; }
@@ -146,11 +175,15 @@ const ratingRows = computed(() =>
 .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--mustard); }
 .n { text-align: right; }
-.review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.review-list { list-style: none; margin: 0 0 1.5rem; padding: 0; display: grid; gap: 1rem; }
+.review.held { border-style: dashed; }
+.reply { margin: 0.75rem 0 0 1rem; padding-left: 0.9rem; border-left: 3px solid var(--line); }
+.reply p { margin: 0.25rem 0 0; }
+.muted { color: var(--muted); }
 .review { padding: 1rem 1.25rem; }
 .review p { margin: 0.5rem 0 0; }
 .who { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
 .who time { color: var(--muted); font-size: 0.85rem; margin-left: auto; }
 .related { margin-top: 3.5rem; }
-@media (max-width: 800px) { .top, .reviews-grid { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .top, .reviews-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

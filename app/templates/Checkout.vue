@@ -278,6 +278,6 @@ dd.grand { color: var(--rust); font-family: var(--font-display); }
 .wide { width: 100%; justify-content: center; margin-top: 0.5rem; }
 .button:disabled { opacity: 0.6; cursor: wait; }
 .back { display: inline-block; margin-top: 1rem; text-decoration: none; }
-@media (max-width: 900px) { .checkout { grid-template-columns: 1fr; } .order { position: static; } }
+@media (max-width: 900px) { .checkout { grid-template-columns: minmax(0, 1fr); } .order { position: static; } }
 @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
 </style>

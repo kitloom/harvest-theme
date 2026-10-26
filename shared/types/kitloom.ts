@@ -66,19 +66,49 @@ export interface CommentAuthor { name: string; url: string | null; initials: str
 
 export interface Comment {
   id: number
+  parentId: number
   depth: number
+  link: string
   dateText: string
   author: CommentAuthor
   paragraphs: string[]
+  status: 'approved' | 'hold' | string
+  canReply: boolean
   children: Comment[]
+}
+
+export interface Protection {
+  honeypot?: { nameFieldName: string; validFromFieldName: string; encryptedValidFrom: string } | null
+  turnstile?: { siteKey: string } | null
+}
+
+/** The comment form of a record, as the site would draw it for this visitor. */
+export interface CommentFormData {
+  postId: number
+  mustLogIn: boolean
+  loginUrl: string | null
+  loggedInAs: { name: string } | null
+  logoutUrl: string | null
+  requireNameEmail: boolean
+  cookiesOptIn: boolean
+  author: { name: string; email: string; url: string }
+  protection: Protection
+  maxLengths?: Record<string, number>
 }
 
 export interface Comments {
   open: boolean
+  closedReason: string | null
   count: number
+  threaded: boolean
+  maxDepth: number
   items: Comment[]
   page: number
   pages: number
+  prevUrl: string | null
+  nextUrl: string | null
+  form: CommentFormData | null
+  notice: { type: string; message: string } | null
 }
 
 export interface Product {
@@ -101,7 +131,7 @@ export interface Product {
   purchasable: boolean
 }
 
-export interface Review { id: number; author: string; dateText: string; rating: number; verified: boolean; content: string }
+export interface Review { id: number; author: string; dateText: string; rating: number; verified: boolean; content: string; replies?: { id: number; author: string; dateText: string; content: string }[] }
 
 export interface ProductDetail extends Product {
   shortDescription: string
@@ -113,6 +143,8 @@ export interface ProductDetail extends Product {
   ratingCounts: Record<string, number>
   related: Product[]
   upsells: Product[]
+  reviewsAllowed: boolean
+  reviewForm: { requireNameEmail: boolean; verifiedOnly: boolean; mustLogIn: boolean; protection: Protection } | null
 }
 
 export interface ProductCategory {

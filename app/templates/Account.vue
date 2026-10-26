@@ -69,7 +69,6 @@ const doSignOut = async () => {
   const result = await signOut()
   if (!result.ok) return notify(result.message)
   cart.value = null
-  clearNuxtData()
   await navigateTo('/')
   notify('You are signed out.')
 }
@@ -338,6 +337,6 @@ const addressCountry = computed(() => form[`${data.value?.type ?? 'billing'}_cou
 .address h3 { margin: 0 0 0.75rem; font-size: 1.15rem; }
 .address p { margin: 0; }
 .edit { display: inline-block; margin-top: 0.75rem; font-weight: 600; text-decoration: none; }
-@media (max-width: 860px) { .account { grid-template-columns: 1fr; } .side { position: static; } .side nav { flex-direction: row; flex-wrap: wrap; } }
+@media (max-width: 860px) { .account { grid-template-columns: minmax(0, 1fr); } .side { position: static; } .side nav { flex-direction: row; flex-wrap: wrap; } .nav-item.out { margin-top: 0; } }
 @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
 </style>

@@ -28,7 +28,7 @@ const { toPath } = useLinks()
 </template>
 
 <style scoped>
-.table-wrap { overflow-x: auto; }
+.table-wrap { position: relative; overflow-x: auto; }
 .orders { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
@@ -37,7 +37,7 @@ tr:last-child td { border-bottom: 0; }
 small { color: var(--muted); }
 .status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: var(--bg-deep); color: var(--ink-soft); }
 .status.processing, .status.completed { background: rgba(95, 110, 47, 0.18); color: var(--moss); }
-.status.on-hold, .status.pending { background: rgba(217, 166, 43, 0.25); color: #6b4e00; }
+.status.on-hold, .status.pending { background: rgba(217, 166, 43, 0.25); color: color-mix(in srgb, var(--mustard) 45%, var(--ink)); }
 .status.cancelled, .status.failed, .status.refunded { background: rgba(123, 34, 50, 0.12); color: var(--wine); }
 .actions { text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; }
 </style>

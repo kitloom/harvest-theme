@@ -23,6 +23,11 @@ export async function siteFetch<T>(
   const site = siteUrl(event)
   const jar = parseJar(getCookie(event, JAR))
 
+  // The visitor, not the theme's server: the site's spam rules, flood limits and comment
+  // records ask who sent a form. A site that trusts its proxies reads the address from here.
+  const visitor = getRequestIP(event, { xForwardedFor: true })
+  const agent = getRequestHeader(event, 'user-agent')
+
   const response = await $fetch.raw<T>(site + path, {
     method: options.method ?? 'GET',
     body: options.body as Record<string, unknown> | undefined,
@@ -30,6 +35,8 @@ export async function siteFetch<T>(
       Accept: 'application/json',
       Origin: site,
       ...(jar.size ? { Cookie: [...jar].map(([name, value]) => `${name}=${value}`).join('; ') } : {}),
+      ...(visitor ? { 'X-Forwarded-For': visitor } : {}),
+      ...(agent ? { 'User-Agent': agent } : {}),
       ...options.headers,
     },
     ignoreResponseError: true,
@@ -72,4 +79,15 @@ function parseJar(value: string | undefined): Map<string, string> {
 export function passThrough<T>(event: H3Event, response: { status: number; _data?: T }): T {
   setResponseStatus(event, response.status)
   return response._data as T
+}
+
+/**
+ * A form's fields as the site's routes take them: names of letters, digits, `_` and `-` (the
+ * honeypot's random field, `cf-turnstile-response`, `wp-comment-cookies-consent`), plain values.
+ */
+export function formFields(form: Record<string, unknown> | undefined): Record<string, string | number | boolean> {
+  return Object.fromEntries(
+    Object.entries(form ?? {}).filter(([key, value]) =>
+      /^[A-Za-z0-9_-]{1,64}$/.test(key) && ['string', 'number', 'boolean'].includes(typeof value)),
+  ) as Record<string, string | number | boolean>
 }

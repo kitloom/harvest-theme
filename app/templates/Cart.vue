@@ -105,7 +105,7 @@ dd.grand { color: var(--rust); font-family: var(--font-display); }
 .button:disabled { opacity: 0.6; cursor: wait; }
 .continue { display: inline-block; margin-top: 1rem; text-decoration: none; }
 @media (max-width: 860px) {
-  .cart { grid-template-columns: 1fr; }
+  .cart { grid-template-columns: minmax(0, 1fr); }
   .line { grid-template-columns: 64px minmax(0, 1fr) auto; }
   .thumb { width: 64px; height: 64px; }
   .quantity { grid-column: 2; }
