@@ -14,8 +14,9 @@ Node 22 or 24. `npm run build` + `node .output/server/index.mjs` for production.
 
 ## Connect your own site
 
-The theme draws any kitloom site; the demo in `.env.example` is one of the public sandboxes.
-To point it at yours:
+The theme draws any kitloom site. The address in `.env.example` is a public sandbox that lives
+three days; [filament.kitloom.dev/pantry](https://filament.kitloom.dev/pantry) makes you a fresh
+one with the same store and its admin. To point the theme at yours:
 
 1. **The address.** Put the site's address in `.env`:
 
@@ -135,3 +136,5 @@ Comment and review forms and contact forms stay on the site.
 Cream paper `#faf3e6`, bark `#2e1f14`, rust `#b2431f`, pumpkin `#dd7a2c`, mustard `#d9a62b`,
 moss `#5f6e2f`, wine `#7b2232` — CSS variables in `app/assets/css/main.css`, redefined for dark.
 Type: Fraunces for headings, Source Sans 3 for text, through `@nuxt/fonts`.
+
+License: MIT. kitloom itself is a paid product; see [kitloom.dev](https://kitloom.dev).
