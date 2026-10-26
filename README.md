@@ -12,6 +12,53 @@ npm run dev              # http://localhost:3000
 
 Node 22 or 24. `npm run build` + `node .output/server/index.mjs` for production.
 
+## Connect your own site
+
+The theme draws any kitloom site; the demo in `.env.example` is one of the public sandboxes.
+To point it at yours:
+
+1. **The address.** Put the site's address in `.env`:
+
+   ```
+   NUXT_PUBLIC_SITE_URL=https://shop.example.com
+   ```
+
+   The theme's server reads the site from there — the browser never talks to the site — so a
+   site on a private address (`http://shop.test`, a staging host behind a VPN) works as long as
+   the machine running Nuxt can reach it. Nothing is needed on the site for the pages: every
+   kitloom site answers `Accept: application/json` with the page as data, and the REST root
+   `/wp-json/` is on by default (`kitloom-site.rest`).
+
+2. **The shop.** The cart, the checkout and the account need kitloom/shop installed with its
+   Store API routes on (`kitloom-shop.routes.register`, the default) and its pages set: Shop,
+   Cart, Checkout and My account under the shop's settings. `kitloom:install` with the demo sets
+   them; a site that came from WooCommerce has them already. Without the shop the theme still
+   draws the posts, pages, archives and search; the catalog, cart and account templates simply
+   never come up.
+
+3. **Who may order.** In the admin, the shop's settings → Accounts:
+   - *Allow customers to place orders without an account* — for the checkout as a guest;
+   - *Allow customers to create an account during checkout* — the "Create an account" box on
+     the checkout;
+   - *Allow customers to create an account on the "My account" page* — the sign-up form next
+     to the sign-in.
+
+   These are WooCommerce's own options (`woocommerce_enable_guest_checkout`,
+   `woocommerce_enable_signup_and_login_from_checkout`,
+   `woocommerce_enable_myaccount_registration`): a site that came from WooCommerce keeps what it
+   had.
+
+4. **How to pay and how to ship.** At least one payment method on (Direct bank transfer or
+   Cash on delivery are enough for a demo) and a shipping zone with a rate for the countries you
+   sell to; otherwise the checkout has nothing to offer. A gateway that takes the payment on its
+   own page sends the shopper there and back to the site's "order received" address, which the
+   theme draws.
+
+Nothing else: no CORS, no API keys, no public AI agents address. The theme's server names the
+site as the `Origin` of every POST, so the site's forms pass its forgery check as on its own
+pages; a module that signs users in another way (two-factor, social sign-in) still takes its step
+on the site.
+
 ## How it works
 
 A kitloom site answers every URL it serves with JSON when asked with `Accept: application/json`:
